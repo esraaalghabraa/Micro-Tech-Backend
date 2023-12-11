@@ -393,6 +393,7 @@ class ProjectController extends Controller
             $all_projects->whereHas('members', function ($q) use ($request) {
                 $q->where('member_id', $request->member_id);
             });
+        $records = $request->Records_Number ? $request->Records_Number : 10;
         $projects = $all_projects
             ->with('features')
             ->with('technologies')
@@ -400,7 +401,7 @@ class ProjectController extends Controller
             ->with('workTypes')
             ->with('platforms')
             ->with('members')
-            ->get();
+            ->latest()->paginate($records);
         return $this->success($projects);
     }
 
