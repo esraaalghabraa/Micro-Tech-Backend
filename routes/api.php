@@ -1,6 +1,11 @@
 <?php
 
-use Illuminate\Http\Request;
+use App\Http\Controllers\MemberController;
+use App\Http\Controllers\PlatformController;
+use App\Http\Controllers\ProjectController;
+use App\Http\Controllers\TechnologyController;
+use App\Http\Controllers\ToolController;
+use App\Http\Controllers\WorkTypeController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -14,6 +19,42 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+Route::controller(WorkTypeController::class)->prefix('work_types')->group(function (){
+    Route::post('create','create');
+    Route::post('edit','edit');
+    Route::post('delete','delete');
+    Route::get('index','index');
 });
+Route::controller(MemberController::class)->prefix('member')->group(function (){
+    Route::post('create','create');
+    Route::post('edit','edit');
+    Route::post('delete','delete');
+    Route::get('index','index');
+});
+Route::controller(TechnologyController::class)->prefix('technology')->group(function (){
+    Route::post('create','create');
+    Route::post('edit','edit');
+    Route::post('delete','delete');
+    Route::get('index','index');
+});
+Route::controller(PlatformController::class)->prefix('platform')->group(function (){
+    Route::post('create','create');
+    Route::post('edit','edit');
+    Route::post('delete','delete');
+    Route::get('index','index');
+});
+Route::controller(ToolController::class)->prefix('tool')->group(function (){
+    Route::post('create','create');
+    Route::post('edit','edit');
+    Route::post('delete','delete');
+    Route::get('index','index');
+});
+Route::controller(ProjectController::class)->prefix('project')->group(function (){
+    Route::post('create','create');
+    Route::post('add_members','addMembers');
+    Route::post('edit','edit');
+    Route::post('add_features','addFeatures');
+    Route::post('delete','delete');
+    Route::get('index','index');
+});
+

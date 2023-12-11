@@ -14,6 +14,8 @@ return new class extends Migration
         Schema::create('tools', function (Blueprint $table) {
             $table->id();
             $table->string('name',30);
+            $table->string('icon',255);
+            $table->integer('number_project')->default(0);
             $table->timestamps();
         });
     }
