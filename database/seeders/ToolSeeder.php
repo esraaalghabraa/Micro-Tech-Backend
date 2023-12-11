@@ -81,21 +81,38 @@ class ToolSeeder extends Seeder
                 'tool_id' => 1,
                 'project_id' => $project->id
             ]);
-            WorkTypesProject::create([
+            $tool = Tool::find(1);
+            $tool->update([
+                'number_project'=> $tool->number_project += 1
+            ]);            WorkTypesProject::create([
                 'work_type_id' => 1,
                 'project_id' => $project->id
             ]);
-            MemberProject::create([
+            $WorkType = WorkType::find(1);
+            $WorkType->update([
+                'number_project'=> $WorkType->number_project += 1
+            ]);            MemberProject::create([
                 'member_id' => 1,
                 'project_id' => $project->id
+            ]);
+            $Member=Member::find(1);
+            $Member->update([
+                'number_project'=> $Member->number_project += 1
             ]);
             TechnologiesProject::create([
                 'technology_id' => 1,
                 'project_id' => $project->id
             ]);
-            PlatformProject::create([
+            $Technology=Technology::find(1);
+            $Technology->update([
+                'number_project'=> $Technology->number_project += 1
+            ]);            PlatformProject::create([
                 'platform_id' => 1,
                 'project_id' => $project->id
+            ]);
+            $Platform= Platform::find(1);
+            $Platform->update([
+               'number_project'=> $Platform->number_project += 1
             ]);
         }
     }
