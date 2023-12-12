@@ -34,8 +34,8 @@ class PlatformController extends Controller
         $platform = Platform::find($request->id);
             $platform->update(['name'=>$request->name]);
         if ($request->has('icon')) {
-            $path = public_path('assets\images\platforms\\' . $platform->icon);
-            unlink($path);
+            if ($platform->icon)
+                $this->deleteImage('platforms',$platform->icon);
             $platform->update(['icon'=>$this->setImage($request, 'icon', 'platforms')]);
         }
         $platform->save();
@@ -50,8 +50,8 @@ class PlatformController extends Controller
         $platform = Platform::find($request->id);
         if ($platform->number_project > 0)
             return $this->error('you can not delete this platform');
-        $path = public_path('assets\images\platforms\\' . $platform->icon);
-        unlink($path);
+        if ($platform->icon)
+        $this->deleteImage('platforms',$platform->icon);
         $platform->delete();
         return $this->success();
     }

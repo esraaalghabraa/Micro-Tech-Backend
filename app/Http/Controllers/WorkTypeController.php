@@ -34,8 +34,8 @@ class WorkTypeController extends Controller
         $work_type = WorkType::find($request->id);
             $work_type->update(['name'=>$request->name]);
         if ($request->has('icon')) {
-            $path = public_path('assets\images\work_types\\' . $work_type->icon);
-            unlink($path);
+            if ($work_type->icon)
+                $this->deleteImage('work_types',$work_type->icon);
             $work_type->update(['icon'=>$this->setImage($request, 'icon', 'work_types')]);
         }
         $work_type->save();
@@ -50,8 +50,8 @@ class WorkTypeController extends Controller
         $work_type = WorkType::find($request->id);
         if ($work_type->number_project > 0)
             return $this->error('you can not delete this work_type');
-        $path = public_path('assets\images\work_types\\' . $work_type->icon);
-        unlink($path);
+        if ($work_type->icon)
+            $this->deleteImage('work_types',$work_type->icon);
         $work_type->delete();
         return $this->success();
     }

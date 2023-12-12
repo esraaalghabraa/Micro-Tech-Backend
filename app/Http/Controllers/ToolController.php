@@ -35,8 +35,8 @@ class ToolController extends Controller
         $tool = Tool::find($request->id);
         $tool->update(['name'=>$request->name]);
         if ($request->has('icon')) {
-            $path = public_path('assets\images\tools\\' . $tool->icon);
-            unlink($path);
+            if ($tool->icon)
+                $this->deleteImage('tools',$tool->icon);
             $tool->update(['icon'=>$this->setImage($request, 'icon', 'tools')]);
         }
         $tool->save();
@@ -51,8 +51,8 @@ class ToolController extends Controller
         $tool = Tool::find($request->id);
         if ($tool->number_project > 0)
             return $this->error('you can not delete this tool');
-        $path = public_path('assets\images\tools\\' . $tool->icon);
-            unlink($path);
+        if ($tool->icon)
+            $this->deleteImage('tools',$tool->icon);
         $tool->delete();
         return $this->success();
     }

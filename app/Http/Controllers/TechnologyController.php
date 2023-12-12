@@ -34,8 +34,8 @@ class TechnologyController extends Controller
         $technology = Technology::find($request->id);
             $technology->update(['name'=>$request->name]);
         if ($request->has('icon')) {
-            $path = public_path('assets\images\technologies\\' . $technology->icon);
-            unlink($path);
+            if ($technology->icon)
+                $this->deleteImage('technologies',$technology->icon);
             $technology->update(['icon'=>$this->setImage($request, 'icon', 'technologies')]);
         }
         $technology->save();
@@ -50,8 +50,8 @@ class TechnologyController extends Controller
         $technology = Technology::find($request->id);
         if ($technology->number_project > 0)
             return $this->error('you can not delete this technology');
-        $path = public_path('assets\images\technologies\\' . $technology->icon);
-        unlink($path);
+        if ($technology->icon)
+            $this->deleteImage('technologies',$technology->icon);
         $technology->delete();
         return $this->success();
     }
