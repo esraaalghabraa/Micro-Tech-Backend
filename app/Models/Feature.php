@@ -10,16 +10,16 @@ class Feature extends Model
 {
     use HasFactory,ImageTrait;
     protected $guarded=[];
-    protected $hidden=['pivot','images'];
-    protected $appends=['images_feature'];
+    protected $hidden=['pivot'];
     protected $casts=['images'=>'array'];
 
 
-    protected function getImagesFeatureAttribute(){
-        return  $this->getImagesArray($this->images,'feature_images');
-    }
 
     public function project(){
         $this->belongsTo(Project::class,'project_id');
+    }
+
+    public function images(){
+        return $this->hasMany(Image::class);
     }
 }

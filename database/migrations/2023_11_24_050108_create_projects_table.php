@@ -20,9 +20,8 @@ return new class extends Migration
             $table->string('logo',1000)->nullable();
             $table->string('about',255)->nullable();
             $table->string('advantages')->nullable();
-            $table->string('hero_images')->nullable();
             $table->string('links')->nullable();
-            $table->tinyInteger('active')->default(0);
+            $table->boolean('active')->default(0);
             $table->timestamps();
         });
     }

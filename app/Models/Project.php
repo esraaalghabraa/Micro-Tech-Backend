@@ -11,16 +11,12 @@ class Project extends Model
 {
     use HasFactory,ImageTrait;
     protected $guarded=[];
-    protected $hidden=['cover','logo','hero_images'];
-    protected $appends=['cover_url','logo_url','images_hero'];
+    protected $hidden=['cover','logo'];
+    protected $appends=['cover_url','logo_url'];
     protected $casts=[
         'advantages'=>'array',
-        'hero_images'=>'array',
         'links'=>'array',
     ];
-    protected function getImagesHeroAttribute(){
-        return  $this->getImagesArray($this->hero_images,'hero_images');
-    }
     protected function getCoverUrlAttribute(){
         return  $this->getImage($this->cover,'covers');
     }
@@ -31,6 +27,9 @@ class Project extends Model
     //relations
     public function features(){
         return $this->hasMany(Feature::class);
+    }
+    public function images(){
+        return $this->hasMany(Image::class);
     }
     public function technologies(){
         return $this->belongsToMany(Technology::class,TechnologiesProject::class);

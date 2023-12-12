@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Feature;
+use App\Models\Image;
 use App\Models\Member;
 use App\Models\MemberProject;
 use App\Models\Platform;
@@ -16,7 +17,9 @@ use App\Models\WorkType;
 use App\Models\WorkTypesProject;
 use App\Traits\ImageTrait;
 use Illuminate\Http\Request;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File as FacadesFile;
 use Illuminate\Support\Facades\Validator;
 use PHPUnit\Framework\Constraint\FileExists;
 use function PHPUnit\Framework\isEmpty;
@@ -25,7 +28,7 @@ class ProjectController extends Controller
 {
     use ImageTrait;
 
-    public function createShort(Request $request)
+    public function createFast(Request $request)
     {
         $validator = Validator::make($request->all(), [
             'title' => ['required', 'string', 'unique:projects,title'],
@@ -131,23 +134,29 @@ class ProjectController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'project_id' => ['required', 'exists:projects,id'],
-            'cover' => ['nullable', 'image', 'mimes:jpeg,jpg,png', 'max:10000'],
-            'logo' => ['required', 'image', 'mimes:jpeg,jpg,png', 'max:10000'],
-            'hero_images' => ['required', 'array'],
-            'hero_images.*' => ['required', 'image']
+            'cover' => ['image', 'mimes:jpeg,jpg,png', 'max:10000'],
+            'logo' => ['image', 'mimes:jpeg,jpg,png', 'max:10000'],
+            'images' => ['array'],
+            'images.*' => ['required', 'image', 'mimes:jpeg,jpg,png', 'max:10000']
         ]);
         if ($validator->fails())
             return $this->error($validator->errors()->first());
         $project = Project::find($request->project_id);
-        $images=[];
-        foreach ($request->hero_images as $i=>$item) {
-            $images[$i]=$this->setItemImage($item,'hero_images');
-        }
-        $project->update([
-            'cover' => $this->setImage($request, 'cover', 'covers'),
-            'logo' => $this->setImage($request, 'logo', 'logos'),
-            'hero_images' =>  $images,
-        ]);
+        if ($request->cover)
+            $project->update([
+                'cover' => $this->setImage($request, 'cover', 'covers'),
+            ]);
+        if ($request->logo)
+            $project->update([
+                'logo' => $this->setImage($request, 'logo', 'logos'),
+            ]);
+        if ($request->images)
+            foreach ($request->images as $item) {
+                Image::create([
+                    'image' => $this->setItemImage($item, 'images'),
+                    'project_id' => $request->project_id
+                ]);
+            }
         $project->save();
         return $this->success();
     }
@@ -164,35 +173,20 @@ class ProjectController extends Controller
         ]);
         if ($validator->fails())
             return $this->error($validator->errors()->first());
-        foreach ($request->features as $feature) {
-            $feature_images=[];
-            foreach ($feature['images'] as $i=>$item) {
-                $feature_images[$i]=$this->setItemImage($item,'feature_images');
-            }
-            Feature::create([
-                'title' => $feature['title'],
-                'description' => $feature['description'],
-                'images'=>$feature_images,
+        foreach ($request->features as $item) {
+            $feature = Feature::create([
+                'title' => $item['title'],
+                'description' => $item['description'],
                 'project_id' => $request->project_id,
             ]);
+            foreach ($item['images'] as $image) {
+                Image::create([
+                    'image' => $this->setItemImage($image, 'images'),
+                    'project_id' => $request->project_id,
+                    'feature_id' => $feature->id
+                ]);
+            }
         }
-        return $this->success();
-    }
-
-    public function editFeatures(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'project_id' => ['required', 'exists:projects,id'],
-            'features' => ['required', 'array', 'min:1'],
-            'features.*.id' => ['required', 'exists:features,id'],
-            'features.*.title' => ['required', 'string'],
-            'features.*.description' => ['required', 'string'],
-            'features.*.images' => ['required', 'array', 'min:1'],
-            'features.*.images.*' => ['required'],
-        ]);
-        if ($validator->fails())
-            return $this->error($validator->errors()->first());
-
         return $this->success();
     }
 
@@ -328,6 +322,91 @@ class ProjectController extends Controller
         }
     }
 
+    public function editImages(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'project_id' => ['required', 'exists:projects,id'],
+            'cover' => ['nullable', 'image', 'mimes:jpeg,jpg,png', 'max:10000'],
+            'logo' => ['nullable', 'image', 'mimes:jpeg,jpg,png', 'max:10000'],
+            'images' => ['array'],
+            'images.*.id' => ['required', 'exists:images,id'],
+            'images.*.image' => ['required', 'image', 'mimes:jpeg,jpg,png', 'max:10000']
+        ]);
+        if ($validator->fails())
+            return $this->error($validator->errors()->first());
+        $project = Project::with('images')->find($request->project_id);
+        if ($request->cover) {
+            if ($project->cover != null) {
+                $this->deleteImage('covers', $project->cover);
+                $project->cover = null;
+                $project->save();
+            }
+            $project->update([
+                'cover' => $this->setImage($request, 'cover', 'covers'),
+            ]);
+            $project->save();
+        }
+        if ($request->logo) {
+            if ($project->logo != null) {
+                $this->deleteImage('logos', $project->logo);
+                $project->logo = null;
+                $project->save();
+            }
+            $project->update([
+                'logo' => $this->setImage($request, 'logo', 'logos'),
+            ]);
+            $project->save();
+        }
+        if ($request->images) {
+            $images_project = Image::where('project_id', $request->project_id)->get();
+
+            foreach ($request->images as $item) {
+                $image = $images_project->find($item['id']);
+                if ($image) {
+                    $this->deleteImage('images', $image['image']);
+                }
+                $image->image = $this->setItemImage($item['image'], 'images');
+                $image->save();
+            }
+        }
+        $project->save();
+        return $this->success();
+    }
+
+    public function editFeatures(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'features' => ['required', 'array', 'min:1'],
+            'features.*.id' => ['required', 'exists:features,id'],
+            'features.*.title' => ['required', 'string'],
+            'features.*.description' => ['required', 'string'],
+            'features.*.images' => ['required', 'array', 'min:1'],
+            'features.*.images.*.id' => ['required', 'exists:images,id'],
+            'features.*.images.*.image' => ['required', 'image', 'mimes:jpeg,jpg,png', 'max:10000'],
+        ]);
+        if ($validator->fails())
+            return $this->error($validator->errors()->first());
+        foreach ($request->features as $item) {
+            $feature = Feature::find($item['id']);
+            $feature->update([
+                'title' => $item['title'],
+                'description' => $item['description'],
+            ]);
+            foreach ($item['images'] as $image_item) {
+                $image = Image::find($image_item['id']);
+                if ($image->image != null) {
+                    $this->deleteImage('images', $image->image);
+                    $image->image = null;
+                    $image->save();
+                }
+                $image->image = $this->setItemImage($image_item['image'], 'images');
+                $image->save();
+            }
+            $feature->save();
+        }
+        return $this->success();
+    }
+
     public function delete(Request $request)
     {
         $validator = Validator::make($request->all(), [
@@ -336,8 +415,6 @@ class ProjectController extends Controller
         if ($validator->fails())
             return $this->error($validator->errors()->first());
         $project = Project::find($request->id);
-        foreach ($project->features as $value)
-            $value->delete();
         $platform_project = PlatformProject::where('project_id', $request->id)->get();
         foreach ($platform_project as $item) {
             $item->delete();
@@ -358,7 +435,32 @@ class ProjectController extends Controller
         foreach ($technology_project as $item) {
             $item->delete();
         }
+        if ($project->cover != null)
+            $this->deleteImage('covers', $project->cover);
+        if ($project->logo != null)
+            $this->deleteImage('logos', $project->logo);
+        if ($project->images)
+            foreach ($project->images as $image) {
+                $this->deleteImage('images', $image->image);
+            }
+        foreach ($project->features as $feature) {
+            $feature->delete();
+        }
         $project->delete();
+        return $this->success();
+    }
+
+    public function activate(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'id' => ['required', 'exists:projects,id'],
+            'active' => ['required','boolean'],
+        ]);
+        if ($validator->fails())
+            return $this->error($validator->errors()->first());
+        $project = Project::find($request->id);
+        $project->active = $request->active;
+        $project->save();
         return $this->success();
     }
 
@@ -366,6 +468,7 @@ class ProjectController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'title' => ['string'],
+            'active' => ['boolean'],
             'technology_id' => ['exists:technologies,id'],
             'work_type_id' => ['exists:work_types,id'],
             'platform_id' => ['exists:platforms,id'],
@@ -376,6 +479,8 @@ class ProjectController extends Controller
         $all_projects = Project::query();
         if ($request->has('title'))
             $all_projects->where('title', 'like', '%' . $request->title . '%');
+        if ($request->has('active'))
+            $all_projects->where('active',$request->active);
         if ($request->has('technology_id')) {
             $all_projects->whereHas('technologies', function ($q) use ($request) {
                 $q->where('technologies.id', $request->technology_id);
@@ -393,345 +498,21 @@ class ProjectController extends Controller
             $all_projects->whereHas('members', function ($q) use ($request) {
                 $q->where('member_id', $request->member_id);
             });
-        $records = $request->Records_Number ? $request->Records_Number : 10;
+        $records = $request->records_number ? $request->records_number : 10;
         $projects = $all_projects
-            ->with('features')
+            ->with(['features'=>function($q){
+                return $q->with('images');
+            }])
+            ->with(['images'=>function($q){
+                return $q->where('images.feature_id',null);
+            }])
             ->with('technologies')
             ->with('tools')
             ->with('workTypes')
             ->with('platforms')
             ->with('members')
-            ->latest()->paginate($records);
+            ->paginate($records);
         return $this->success($projects);
     }
 
-    public function addMembers(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'project_id' => ['required', 'exists:projects,id'],
-            'member_ids' => ['required', 'array', 'min:1'],
-            'member_ids.*' => ['exists:members,id'],
-        ]);
-        if ($validator->fails())
-            return $this->error($validator->errors()->first());
-        foreach ($request->member_ids as $value) {
-            MemberProject::create([
-                'member_id' => $value,
-                'project_id' => $request->project_id
-            ]);
-            $member = Member::find($value);
-            $member->number_project += 1;
-            $member->save();
-        }
-        return $this->success();
-    }
-
-    public function addPlatforms(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'project_id' => ['required', 'exists:projects,id'],
-            'platform_ids' => ['required', 'array', 'min:1'],
-            'platform_ids.*' => ['exists:platforms,id'],
-        ]);
-        if ($validator->fails())
-            return $this->error($validator->errors()->first());
-        foreach ($request->platform_ids as $value) {
-            PlatformProject::create([
-                'platform_id' => $value,
-                'project_id' => $request->project_id
-            ]);
-            $platform = Platform::find($value);
-            $platform->number_project += 1;
-            $platform->save();
-        }
-        return $this->success();
-    }
-
-    public function addToolsKit(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'project_id' => ['required', 'exists:projects,id'],
-            'tool_ids' => ['required', 'array', 'min:1'],
-            'tool_ids.*' => ['exists:tools,id'],
-        ]);
-        if ($validator->fails())
-            return $this->error($validator->errors()->first());
-        foreach ($request->tool_ids as $value) {
-            ToolProject::create([
-                'tool_id' => $value,
-                'project_id' => $request->project_id
-            ]);
-            $tool = Tool::find($value);
-            $tool->number_project += 1;
-            $tool->save();
-        }
-        return $this->success();
-    }
-
-    public function addWorkTypes(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'project_id' => ['required', 'exists:projects,id'],
-            'work_type_ids' => ['required', 'array', 'min:1'],
-            'work_type_ids.*' => ['exists:work_types,id'],
-        ]);
-        if ($validator->fails())
-            return $this->error($validator->errors()->first());
-        foreach ($request->work_type_id as $value) {
-            WorkType::create([
-                'work_type_id' => $value,
-                'project_id' => $request->project_id
-            ]);
-            $work_type = WorkType::find($value);
-            $work_type->number_project += 1;
-            $work_type->save();
-        }
-        return $this->success();
-    }
-
-    public function addTechnologies(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'project_id' => ['required', 'exists:projects,id'],
-            'technology_ids' => ['required', 'array', 'min:1'],
-            'technology_ids.*' => ['exists:technologies,id'],
-        ]);
-        if ($validator->fails())
-            return $this->error($validator->errors()->first());
-        foreach ($request->technology_ids as $value) {
-            TechnologiesProject::create([
-                'technology_id' => $value,
-                'project_id' => $request->project_id
-            ]);
-            $technology = Technology::find($value);
-            $technology->number_project += 1;
-            $technology->save();
-        }
-        return $this->success();
-    }
-
-    public function deleteMembers(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'project_id' => ['required', 'exists:projects,id'],
-            'member_ids' => ['required', 'array', 'min:1'],
-            'member_ids.*' => ['exists:members,id'],
-        ]);
-        if ($validator->fails())
-            return $this->error($validator->errors()->first());
-        foreach ($request->member_ids as $value) {
-            MemberProject::create([
-                'member_id' => $value,
-                'project_id' => $request->project_id
-            ]);
-            $member = Member::find($value);
-            $member->number_project += 1;
-            $member->save();
-        }
-        return $this->success();
-    }
-
-    public function deletePlatforms(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'project_id' => ['required', 'exists:projects,id'],
-            'platform_ids' => ['required', 'array', 'min:1'],
-            'platform_ids.*' => ['exists:platforms,id'],
-        ]);
-        if ($validator->fails())
-            return $this->error($validator->errors()->first());
-        foreach ($request->platform_ids as $value) {
-            PlatformProject::create([
-                'platform_id' => $value,
-                'project_id' => $request->project_id
-            ]);
-            $platform = Platform::find($value);
-            $platform->number_project += 1;
-            $platform->save();
-        }
-        return $this->success();
-    }
-
-    public function deleteToolsKit(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'project_id' => ['required', 'exists:projects,id'],
-            'tool_ids' => ['required', 'array', 'min:1'],
-            'tool_ids.*' => ['exists:tools,id'],
-        ]);
-        if ($validator->fails())
-            return $this->error($validator->errors()->first());
-        foreach ($request->tool_ids as $value) {
-            ToolProject::create([
-                'tool_id' => $value,
-                'project_id' => $request->project_id
-            ]);
-            $tool = Tool::find($value);
-            $tool->number_project += 1;
-            $tool->save();
-        }
-        return $this->success();
-    }
-
-    public function deleteWorkTypes(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'project_id' => ['required', 'exists:projects,id'],
-            'work_type_ids' => ['required', 'array', 'min:1'],
-            'work_type_ids.*' => ['exists:work_types,id'],
-        ]);
-        if ($validator->fails())
-            return $this->error($validator->errors()->first());
-        foreach ($request->work_type_id as $value) {
-            WorkType::create([
-                'work_type_id' => $value,
-                'project_id' => $request->project_id
-            ]);
-            $work_type = WorkType::find($value);
-            $work_type->number_project += 1;
-            $work_type->save();
-        }
-        return $this->success();
-    }
-
-    public function deleteTechnologies(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'project_id' => ['required', 'exists:projects,id'],
-            'technology_ids' => ['required', 'array', 'min:1'],
-            'technology_ids.*' => ['exists:technologies,id'],
-        ]);
-        if ($validator->fails())
-            return $this->error($validator->errors()->first());
-        foreach ($request->technology_ids as $value) {
-            TechnologiesProject::create([
-                'technology_id' => $value,
-                'project_id' => $request->project_id
-            ]);
-            $technology = Technology::find($value);
-            $technology->number_project += 1;
-            $technology->save();
-        }
-        return $this->success();
-    }
-
-    public function editImages(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'project_id' => ['required', 'exists:projects,id'],
-            'cover' => ['nullable', 'image', 'mimes:jpeg,jpg,png', 'max:10000'],
-            'logo' => ['nullable', 'image', 'mimes:jpeg,jpg,png', 'max:10000'],
-            'image_ids' => ['nullable', 'array'],
-            'image_ids.*' => ['required', 'exists:project_images,id']
-        ]);
-        if ($validator->fails())
-            return $this->error($validator->errors()->first());
-        $project = Project::find($request->project_id);
-        if ($request->has('cover')) {
-            if ($project->cover) {
-                $path = public_path('assets\images\covers\\' . $project->cover);
-                unlink($path);
-            }
-            $project->update([
-                'cover' => $this->setImage($request, 'cover', 'covers'),
-            ]);
-            $project->save();
-        }
-        if ($request->has('logo'))
-            if ($project->logo) {
-                $path = public_path('assets\images\logos\\' . $project->logo);
-                unlink($path);
-            }
-        $project->update([
-            'logo' => $this->setImage($request, 'logo', 'logos'),
-        ]);
-        $project->save();
-        if ($request->has('image_ids'))
-            foreach ($request->image_ids as $value) {
-                $image = ProjectImage::find($value);
-                $path = public_path('assets\images\screens\\' . $image->image);
-                unlink($path);
-                $image->update([
-                    'image' => $this->setImage($request, 'image', 'screens'),
-                ]);
-            }
-        return $this->success();
-    }
-
-    public function editAdvantage(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'advantage_id' => ['required', 'exists:advantages,id'],
-            'name' => ['required', 'string'],
-        ]);
-        if ($validator->fails())
-            return $this->error($validator->errors()->first());
-        Advantage::find($request->advantage_id)->update(['name' => $request->name]);
-        return $this->success();
-    }
-
-    public function deleteAdvantage(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'advantage_id' => ['required', 'exists:advantages,id'],
-        ]);
-        if ($validator->fails())
-            return $this->error($validator->errors()->first());
-        Advantage::find($request->advantage_id)->delete();
-        return $this->success();
-    }
-
-    public function editFeature(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'feature_id' => ['required', 'exists:features,id'],
-            'title' => ['nullable', 'string'],
-            'description' => ['nullable', 'string'],
-        ]);
-        if ($validator->fails())
-            return $this->error($validator->errors()->first());
-        $feature = Feature::find($request->feature_id);
-        if ($request->has('title'))
-            $feature->update(['name' => $request->name]);
-        if ($request->has('description'))
-            $feature->update(['name' => $request->description]);
-        return $this->success();
-    }
-
-    public function deleteFeature(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'feature_id' => ['required', 'exists:features,id'],
-        ]);
-        if ($validator->fails())
-            return $this->error($validator->errors()->first());
-        Feature::find($request->feature_id)->delete();
-        return $this->success();
-    }
-
-
-    /**
-     * create project
-     * get Projects with filtering by title|technology|work_type|platform|member
-     * add Members for special project
-     * add Platforms for special project
-     * add ToolsKit for special project
-     * add WorkTypes for special project
-     * add Technologies for special project
-     * add Advantages for special project
-     * add Features for special project
-     * add Images for special project such as cover|logo|screens
-     * edit Advantage for special project
-     * edit Feature for special project
-     * edit Images for special project such as cover|logo|screens
-     * delete Members for special project
-     * delete Platforms for special project
-     * delete ToolsKit for special project
-     * delete WorkTypes for special project
-     * delete Technologies for special project
-     **/
-
-    //TODO
-    // add update function same create
-    // add update function same addImages
 }

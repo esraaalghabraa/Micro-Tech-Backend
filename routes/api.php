@@ -51,10 +51,15 @@ Route::controller(ToolController::class)->prefix('tool')->group(function (){
 });
 Route::controller(ProjectController::class)->prefix('project')->group(function (){
     Route::post('create','create');
-    Route::post('add_members','addMembers');
     Route::post('edit','edit');
-    Route::post('add_features','addFeatures');
     Route::post('delete','delete');
     Route::get('index','index');
+    Route::post('activate','activate');
+
+    Route::post('create_fast','createFast');
+    Route::post('add_images','addImages');
+    Route::post('edit_images','editImages');
+    Route::post('add_features','addFeatures');
+    Route::post('edit_features','editFeatures');
 });
 

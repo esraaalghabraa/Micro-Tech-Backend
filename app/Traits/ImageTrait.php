@@ -1,6 +1,8 @@
 <?php
 namespace App\Traits;
 
+use Illuminate\Support\Facades\File as FacadesFile;
+
 Trait ImageTrait{
 
 
@@ -31,6 +33,10 @@ Trait ImageTrait{
             $hero_images[$i]=$image ? asset('assets/images/'.$folderName.'/'.$image) : asset('assets/images/im5.png');
         }
         return $hero_images;
+    }
+
+    public function deleteImage($folderName,$image){
+        FacadesFile::delete(public_path('assets\images\\'.$folderName .'\\' . $image));
     }
 
 
