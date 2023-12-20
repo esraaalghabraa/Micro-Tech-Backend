@@ -63,3 +63,6 @@ Route::controller(ProjectController::class)->prefix('project')->group(function (
     Route::post('edit_features','editFeatures');
 });
 
+Route::get('test',function(){
+    return 'test';
+});
