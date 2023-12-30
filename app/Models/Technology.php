@@ -10,7 +10,7 @@ class Technology extends Model
 {
     use HasFactory,ImageTrait;
     protected $guarded=[];
-    protected $table='Technologies';
+    protected $table='technologies';
     protected $hidden=['pivot','icon'];
     protected $appends=['icon_url'];
     public function getIconUrlAttribute()

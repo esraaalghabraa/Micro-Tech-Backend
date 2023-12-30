@@ -17,12 +17,7 @@ use App\Models\WorkType;
 use App\Models\WorkTypesProject;
 use App\Traits\ImageTrait;
 use Illuminate\Http\Request;
-use Illuminate\Support\Arr;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\File as FacadesFile;
 use Illuminate\Support\Facades\Validator;
-use PHPUnit\Framework\Constraint\FileExists;
-use function PHPUnit\Framework\isEmpty;
 
 class ProjectController extends Controller
 {
