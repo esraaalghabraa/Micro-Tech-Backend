@@ -12,8 +12,8 @@ class PlatformController extends Controller
     use ImageTrait;
     public function create(Request $request){
         $validator = Validator::make($request->all(),[
-            'name'=>['required','string'],
-            'icon'=>['required','image','mimes:jpeg,jpg,png'],
+            'name'=>['required','string','unique:platforms,name'],
+            'icon'=>['required','image','mimes:jpeg,jpg,png,svg'],
         ]);
         if ($validator->fails())
             return $this->error($validator->errors()->first());
@@ -26,8 +26,8 @@ class PlatformController extends Controller
     public function edit(Request $request){
         $validator = Validator::make($request->all(),[
             'id'=>['required','exists:platforms,id'],
-            'name'=>['required','string'],
-            'icon'=>['image','mimes:jpeg,jpg,png'],
+            'name'=>['required','string','unique:platforms,name,' . $request->id],
+            'icon'=>['image','mimes:jpeg,jpg,png,svg'],
         ]);
         if ($validator->fails())
             return $this->error($validator->errors()->first());
@@ -49,7 +49,7 @@ class PlatformController extends Controller
             return $this->error($validator->errors()->first());
         $platform = Platform::find($request->id);
         if ($platform->number_project > 0)
-            return $this->error('you can not delete this platform');
+            return $this->error('You can not delete this platform because there are projects depended on it');
         if ($platform->icon)
         $this->deleteImage('platforms',$platform->icon);
         $platform->delete();
@@ -57,13 +57,18 @@ class PlatformController extends Controller
     }
     public function index(Request $request){
         $validate = Validator::make(
-            $request->only('name'),
+            $request->all(),
             [
-                'name' => 'nullable|string',
+                'id' => ['nullable','exists:platforms,id'],
+                'name' => ['nullable','string'],
             ]
         );
         if ($validate->fails())
             return $this->error($validate->errors()->first());
+
+        if ($request->id != null) {
+            return $this->success(Platform::find($request->id));
+        }
         $all_platforms = Platform::query();
 
         if ($request->name != null) {

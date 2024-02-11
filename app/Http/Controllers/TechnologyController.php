@@ -13,7 +13,7 @@ class TechnologyController extends Controller
     public function create(Request $request){
         $validator = Validator::make($request->all(),[
             'name'=>['required','string'],
-            'icon'=>['required','image','mimes:jpeg,jpg,png'],
+            'icon'=>['required','image','mimes:jpeg,jpg,png,svg'],
         ]);
         if ($validator->fails())
             return $this->error($validator->errors()->first());
@@ -26,8 +26,8 @@ class TechnologyController extends Controller
     public function edit(Request $request){
         $validator = Validator::make($request->all(),[
             'id'=>['required','exists:technologies,id'],
-            'name'=>['required','string'],
-            'icon'=>['image','mimes:jpeg,jpg,png'],
+            'name'=>['required','string', 'unique:technologies,name,' . $request->id],
+            'icon'=>['image','mimes:jpeg,jpg,png,svg'],
         ]);
         if ($validator->fails())
             return $this->error($validator->errors()->first());
@@ -49,7 +49,7 @@ class TechnologyController extends Controller
             return $this->error($validator->errors()->first());
         $technology = Technology::find($request->id);
         if ($technology->number_project > 0)
-            return $this->error('you can not delete this technology');
+            return $this->error('you can not delete this technology because there are projects depended on it');
         if ($technology->icon)
             $this->deleteImage('technologies',$technology->icon);
         $technology->delete();
@@ -57,18 +57,22 @@ class TechnologyController extends Controller
     }
     public function index(Request $request){
         $validate = Validator::make(
-            $request->only('name'),
+            $request->all(),
             [
-                'name' => 'nullable|string',
+                'id' => ['nullable','exists:technologies,id'],
+                'name' => ['nullable','string'],
             ]
         );
         if ($validate->fails())
             return $this->error($validate->errors()->first());
-        $all_technologies = Technology::query();
-        if ($request->has('name')) {
-           $all_technologies->where('name', 'like', '%' . $request->name . '%');
+        if ($request->id != null) {
+            return $this->success(Technology::find($request->id));
         }
-            $technologies = $all_technologies->get();
+        $all_technologies = Technology::query();
+        if ($request->name != null) {
+            $all_technologies->where('name', 'like', '%' . $request->name . '%');
+        }
+        $technologies = $all_technologies->get();
         return $this->success($technologies);
     }
 

@@ -15,7 +15,7 @@ class Technology extends Model
     protected $appends=['icon_url'];
     public function getIconUrlAttribute()
     {
-        return $this->getImage($this->icon,'Technologies');
+        return $this->getImage($this->icon,'technologies');
     }
     public function projects(){
         $this->belongsToMany(Project::class,TechnologiesProject::class);

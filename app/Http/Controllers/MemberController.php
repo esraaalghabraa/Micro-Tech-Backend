@@ -51,25 +51,28 @@ class MemberController extends Controller
             return $this->error($validator->errors()->first());
         $member = Member::find($request->id);
         if ($member->number_project > 0)
-            return $this->error('you can not delete this member');
+            return $this->error('You cannot delete this participating member because he has projects');
         $member->delete();
         return $this->success();
     }
     public function index(Request $request){
         $validate = Validator::make(
-            $request->only('name'),
+            $request->all(),
             [
-                'name' => 'nullable|string',
+                'id'=>['nullable','exists:members,id'],
+                'name' => ['nullable','string'],
             ]
         );
         if ($validate->fails())
             return $this->error($validate->errors()->first());
-        $all_members = Member::query();
-        if ($request->has('name')) {
-            $members = $all_members->where('name', 'like', '%' . $request->name . '%');
-        }else{
-            $members = $all_members->get();
+        if ($request->id != null) {
+            return $this->success(Member::find($request->id));
         }
+        $all_members = Member::query();
+        if ($request->name != null) {
+            $all_members->where('name', 'like', '%' . $request->name . '%');
+        }
+            $members = $all_members->get();
         return $this->success($members);
     }
 }

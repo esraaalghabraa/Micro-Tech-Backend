@@ -13,8 +13,8 @@ class ToolController extends Controller
     use ImageTrait;
     public function create(Request $request){
         $validator = Validator::make($request->all(),[
-            'name'=>['required','string'],
-            'icon'=>['required','image','mimes:jpeg,jpg,png'],
+            'name'=>['required','string', 'unique:tools,name'],
+            'icon'=>['required','image','mimes:jpeg,jpg,png,svg'],
         ]);
         if ($validator->fails())
             return $this->error($validator->errors()->first());
@@ -26,9 +26,9 @@ class ToolController extends Controller
     }
     public function edit(Request $request){
         $validator = Validator::make($request->all(),[
-            'id'=>['required','exists:tools,id'],
+            'id'=>['required','exists:tools,id', 'unique:tools,name,' .$request->id ],
             'name'=>['required','string'],
-            'icon'=>['image','mimes:jpeg,jpg,png'],
+            'icon'=>['image','mimes:jpeg,jpg,png,svg'],
         ]);
         if ($validator->fails())
             return $this->error($validator->errors()->first());
@@ -50,7 +50,7 @@ class ToolController extends Controller
             return $this->error($validator->errors()->first());
         $tool = Tool::find($request->id);
         if ($tool->number_project > 0)
-            return $this->error('you can not delete this tool');
+            return $this->error('you can not delete this tool because there are projects depended on it');
         if ($tool->icon)
             $this->deleteImage('tools',$tool->icon);
         $tool->delete();
@@ -58,13 +58,17 @@ class ToolController extends Controller
     }
     public function index(Request $request){
         $validate = Validator::make(
-            $request->only('name'),
+            $request->all(),
             [
-                'name' => 'nullable|string',
+                'id' => ['nullable','exists:tools,id'],
+                'name' => ['nullable','string'],
             ]
         );
         if ($validate->fails())
             return $this->error($validate->errors()->first());
+        if ($request->id != null) {
+            return $this->success(Tool::find($request->id));
+        }
         $all_tools = Tool::query();
         if ($request->has('name')) {
             $all_tools->where('name', 'like', '%' . $request->name . '%');

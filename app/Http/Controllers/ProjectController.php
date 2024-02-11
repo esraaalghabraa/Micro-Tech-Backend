@@ -28,7 +28,7 @@ class ProjectController extends Controller
         $validator = Validator::make($request->all(), [
             'title' => ['required', 'string', 'unique:projects,title'],
             'description' => ['required', 'string'],
-            'cover' => ['required', 'image', 'mimes:jpeg,jpg,png', 'max:10000'],
+            'cover' => ['required', 'image', 'mimes:jpeg,jpg,png,svg', 'max:1000'],
         ]);
         if ($validator->fails())
             return $this->error($validator->errors()->first());
@@ -43,7 +43,7 @@ class ProjectController extends Controller
     public function create(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'title' => ['required', 'string'],
+            'title' => ['required', 'string', 'unique:projects,title'],
             'description' => ['required', 'string'],
             'functionality' => ['required', 'string'],
             'about' => ['required', 'string'],
@@ -129,10 +129,10 @@ class ProjectController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'project_id' => ['required', 'exists:projects,id'],
-            'cover' => ['image', 'mimes:jpeg,jpg,png', 'max:10000'],
-            'logo' => ['image', 'mimes:jpeg,jpg,png', 'max:10000'],
+            'cover' => ['image', 'mimes:jpeg,jpg,png,svg', 'max:1000'],
+            'logo' => ['image', 'mimes:jpeg,jpg,png,svg', 'max:1000'],
             'images' => ['array'],
-            'images.*' => ['required', 'image', 'mimes:jpeg,jpg,png', 'max:10000']
+            'images.*' => ['required', 'image', 'mimes:jpeg,jpg,png,svg', 'max:1000']
         ]);
         if ($validator->fails())
             return $this->error($validator->errors()->first());
@@ -164,7 +164,7 @@ class ProjectController extends Controller
             'features.*.title' => ['required', 'string'],
             'features.*.description' => ['required', 'string'],
             'features.*.images' => ['required', 'array', 'min:1'],
-            'features.*.images.*' => ['required', 'image', 'mimes:jpeg,jpg,png'],
+            'features.*.images.*' => ['required', 'image', 'mimes:jpeg,jpg,png,svg'],
         ]);
         if ($validator->fails())
             return $this->error($validator->errors()->first());
@@ -193,7 +193,7 @@ class ProjectController extends Controller
             'description' => ['required', 'string'],
             'functionality' => ['required', 'string'],
             'about' => ['required', 'string'],
-            'advantages' => ['required', 'string'],
+            'advantages' => ['required', 'array'],
             'advantages.*' => ['required', 'string'],
             'links' => ['required', 'array', 'min:1'],
             'links.*.link' => ['required', 'string'],
@@ -222,93 +222,107 @@ class ProjectController extends Controller
                 'links' => $request->links
             ]);
 
-            $tools = Tool::query();
             $tool_project = ToolProject::where('project_id', $request->id)->get();
             foreach ($tool_project as $item) {
-                $tool = $tools->find($item->tool_id);
-                $tool->number_project = 0;
+                $tool = Tool::find($item->tool_id);
+                $tool->update([
+                    'number_project' => $tool->number_project-1
+                ]);
                 $tool->save();
                 $item->delete();
             }
             foreach ($request->tool_ids as $value) {
-                ToolProject::create([
-                    'tool_id' => $request->tool_ids[0],
+               ToolProject::create([
+                    'tool_id' => (int)$value,
                     'project_id' => $project->id
                 ]);
-                $tool = $tools->find($request->tool_ids[0]);
-                $tool->number_project += 1;
+                $tool = Tool::find((int)$value);
+                $tool->update([
+                    'number_project' => $tool->number_project+1
+                ]);
                 $tool->save();
             }
-
-            $work_types = WorkType::query();
             $work_type_projects = WorkTypesProject::where('project_id', $request->id)->get();
             foreach ($work_type_projects as $item) {
-                $work_type = $work_types->find($item->work_type_id);
-                $work_type->number_project = 0;
+                $work_type = WorkType::find($item->work_type_id);
+                $work_type->update([
+                    'number_project' => $work_type->number_project-1
+                ]);
                 $work_type->save();
                 $item->delete();
             }
             foreach ($request->work_type_ids as $value) {
                 WorkTypesProject::create([
-                    'work_type_id' => $request->work_type_ids[0],
+                    'work_type_id' => (int)$value,
                     'project_id' => $project->id
                 ]);
-                $work_type = $work_types->find($request->work_type_ids[0]);
-                $work_type->number_project += 1;
+                $work_type = WorkType::find((int)$value);
+                $work_type->update([
+                    'number_project' => $work_type->number_project+1
+                ]);
                 $work_type->save();
             }
 
-            $members = Member::query();
             $member_project = MemberProject::where('project_id', $request->id)->get();
             foreach ($member_project as $item) {
-                $member = $members->find($item->member_id);
-                $member->number_project = 0;
+                $member = Member::find($item->member_id);
+                $member->update([
+                    'number_project' => $member->number_project-1
+                ]);
                 $member->save();
                 $item->delete();
             }
             foreach ($request->member_ids as $value) {
                 MemberProject::create([
-                    'member_id' => $request->member_ids [0],
+                    'member_id' => (int)$value,
                     'project_id' => $project->id
                 ]);
-                $member = $members->find($request->member_ids [0]);
-                $member->number_project += 1;
+                $member = Member::find((int)$value);
+                $member->update([
+                    'number_project' => $member->number_project+1
+                ]);
                 $member->save();
             }
 
-            $technologies = Technology::query();
             $technology_project = TechnologiesProject::where('project_id', $request->id)->get();
             foreach ($technology_project as $item) {
-                $technology = $technologies->find($item->technology_id);
-                $technology->number_project = 0;
+                $technology = Technology::find($item->technology_id);
+                $technology->update([
+                    'number_project' => $technology->number_project-1
+                ]);
                 $technology->save();
                 $item->delete();
             }
             foreach ($request->technology_ids as $value) {
                 TechnologiesProject::create([
-                    'technology_id' => $request->technology_ids[0],
+                    'technology_id' => (int)$value,
                     'project_id' => $project->id
                 ]);
-                $technology = $technologies->find($request->technology_ids[0]);
-                $technology->number_project += 1;
+                $technology = Technology::find((int)$value);
+                $technology->update([
+                    'number_project' => $technology->number_project+1
+                ]);
                 $technology->save();
             }
 
-            $platforms = Platform::query();
             $platform_project = PlatformProject::where('project_id', $request->id)->get();
             foreach ($platform_project as $item) {
-                $platform = $platforms->find($item->platform_id);
-                $platform->number_project = 0;
+                $platform = Platform::find($item->platform_id);
+                $platform->update([
+                    'number_project' => $platform->number_project-1
+                ]);
                 $platform->save();
                 $item->delete();
             }
             foreach ($request->platform_ids as $value) {
                 PlatformProject::create([
-                    'platform_id' => $request->platform_ids[0],
+                    'platform_id' => (int)$value,
                     'project_id' => $project->id
                 ]);
-                $platform = $platforms->find($request->platform_ids[0]);
-                $platform->number_project += 1;
+                $platform = Platform::find((int)$value);
+                $platform->update([
+                    'number_project' => $platform->number_project+1
+                ]);
                 $platform->save();
             }
             return $this->success(['project_id' => $project->id]);
@@ -321,11 +335,11 @@ class ProjectController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'project_id' => ['required', 'exists:projects,id'],
-            'cover' => ['nullable', 'image', 'mimes:jpeg,jpg,png', 'max:10000'],
-            'logo' => ['nullable', 'image', 'mimes:jpeg,jpg,png', 'max:10000'],
+            'cover' => ['nullable', 'image', 'mimes:jpeg,jpg,png,svg', 'max:1000'],
+            'logo' => ['nullable', 'image', 'mimes:jpeg,jpg,png,svg', 'max:1000'],
             'images' => ['array'],
             'images.*.id' => ['required', 'exists:images,id'],
-            'images.*.image' => ['required', 'image', 'mimes:jpeg,jpg,png', 'max:10000']
+            'images.*.image' => ['required', 'image', 'mimes:jpeg,jpg,png,svg', 'max:1000']
         ]);
         if ($validator->fails())
             return $this->error($validator->errors()->first());
@@ -377,8 +391,8 @@ class ProjectController extends Controller
             'features.*.description' => ['required', 'string'],
             'features.*.images' => ['required', 'array', 'min:1'],
             'features.*.images.*.id' => ['required', 'exists:images,id'],
-            'features.*.images.*.image' => ['required', 'image', 'mimes:jpeg,jpg,png', 'max:10000'],
-        ]);
+            'features.*.images.*.image' => ['required', 'image', 'mimes:jpeg,jpg,png,svg', 'max:1000'],
+            ]);
         if ($validator->fails())
             return $this->error($validator->errors()->first());
         foreach ($request->features as $item) {
@@ -449,12 +463,11 @@ class ProjectController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'id' => ['required', 'exists:projects,id'],
-            'active' => ['required','boolean'],
         ]);
         if ($validator->fails())
             return $this->error($validator->errors()->first());
         $project = Project::find($request->id);
-        $project->active = $request->active;
+        $project->active = !$project->active;
         $project->save();
         return $this->success();
     }

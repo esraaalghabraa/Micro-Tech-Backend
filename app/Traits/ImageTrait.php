@@ -2,7 +2,7 @@
 namespace App\Traits;
 
 use Illuminate\Support\Facades\File as FacadesFile;
-
+use Illuminate\Support\Facades\Storage;
 Trait ImageTrait{
 
 
@@ -36,7 +36,7 @@ Trait ImageTrait{
     }
 
     public function deleteImage($folderName,$image){
-        FacadesFile::delete(public_path('assets\images\\'.$folderName .'\\' . $image));
+        Storage::disk('images')->delete($folderName.'/'. $image);
     }
 
 

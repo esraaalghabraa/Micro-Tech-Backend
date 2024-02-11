@@ -22,39 +22,39 @@ use Illuminate\Support\Facades\Route;
 Route::controller(WorkTypeController::class)->prefix('work_types')->group(function (){
     Route::post('create','create');
     Route::post('edit','edit');
-    Route::post('delete','delete');
+    Route::delete('delete','delete');
     Route::get('index','index');
 });
 Route::controller(MemberController::class)->prefix('member')->group(function (){
     Route::post('create','create');
     Route::post('edit','edit');
-    Route::post('delete','delete');
+    Route::delete('delete','delete');
     Route::get('index','index');
 });
 Route::controller(TechnologyController::class)->prefix('technology')->group(function (){
     Route::post('create','create');
     Route::post('edit','edit');
-    Route::post('delete','delete');
+    Route::delete('delete','delete');
     Route::get('index','index');
 });
 Route::controller(PlatformController::class)->prefix('platform')->group(function (){
     Route::post('create','create');
     Route::post('edit','edit');
-    Route::post('delete','delete');
+    Route::delete('delete','delete');
     Route::get('index','index');
 });
 Route::controller(ToolController::class)->prefix('tool')->group(function (){
     Route::post('create','create');
     Route::post('edit','edit');
-    Route::post('delete','delete');
+    Route::delete('delete','delete');
     Route::get('index','index');
 });
 Route::controller(ProjectController::class)->prefix('project')->group(function (){
     Route::post('create','create');
     Route::post('edit','edit');
-    Route::post('delete','delete');
+    Route::delete('delete','delete');
     Route::get('index','index');
-    Route::post('activate','activate');
+    Route::patch('activate','activate');
 
     Route::post('create_fast','createFast');
     Route::post('add_images','addImages');
