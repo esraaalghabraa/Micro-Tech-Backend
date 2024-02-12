@@ -61,6 +61,7 @@ Route::controller(ProjectController::class)->prefix('project')->group(function (
     Route::post('edit_images','editImages');
     Route::post('add_features','addFeatures');
     Route::post('edit_features','editFeatures');
+    Route::get("get_groups",'getGroups');
 });
 
 Route::get('test',function(){

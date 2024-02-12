@@ -26,9 +26,9 @@ class ProjectController extends Controller
     public function createFast(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'title' => ['required', 'string', 'unique:projects,title'],
-            'description' => ['required', 'string'],
-            'cover' => ['required', 'image', 'mimes:jpeg,jpg,png,svg', 'max:1000'],
+            'title' => [ 'string', 'unique:projects,title'],
+            'description' => [ 'string'],
+            'cover' => [ 'image', 'mimes:jpeg,jpg,png,svg', 'max:1000'],
         ]);
         if ($validator->fails())
             return $this->error($validator->errors()->first());
@@ -43,25 +43,27 @@ class ProjectController extends Controller
     public function create(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'title' => ['required', 'string', 'unique:projects,title'],
-            'description' => ['required', 'string'],
-            'functionality' => ['required', 'string'],
-            'about' => ['required', 'string'],
-            'advantages' => ['required', 'array'],
-            'advantages.*' => ['required', 'string'],
-            'links' => ['required', 'array', 'min:1'],
-            'links.*.link' => ['required', 'string'],
-            'links.*.platform' => ['required', 'string'],
-            'technology_ids' => ['required', 'array', 'min:1'],
-            'technology_ids.*' => ['required', 'exists:technologies,id'],
-            'tool_ids' => ['required', 'array', 'min:1'],
-            'tool_ids.*' => ['required', 'exists:tools,id'],
-            'work_type_ids' => ['required', 'array', 'min:1'],
-            'work_type_ids.*' => ['required', 'exists:work_types,id'],
-            'platform_ids' => ['required', 'array', 'min:1'],
-            'platform_ids.*' => ['required', 'exists:platforms,id'],
-            'member_ids' => ['required', 'array', 'min:1'],
-            'member_ids.*' => ['required', 'exists:members,id'],
+            'title' => [ 'string', 'unique:projects,title'],
+            'description' => [ 'string'],
+            'functionality' => [ 'string'],
+            'about' => [ 'string'],
+            'cover' => ['image', 'mimes:jpeg,jpg,png,svg', 'max:1000'],
+            'logo' => ['image', 'mimes:jpeg,jpg,png,svg', 'max:1000'],
+            'advantages' => [ 'array'],
+            'advantages.*' => [ 'string'],
+            'links' => [ 'array', 'min:1'],
+            'links.*.link' => [ 'string'],
+            'links.*.platform' => [ 'string'],
+            'technology_ids' => [ 'array', 'min:1'],
+            'technology_ids.*' => [ 'exists:technologies,id'],
+            'tool_ids' => [ 'array', 'min:1'],
+            'tool_ids.*' => [ 'exists:tools,id'],
+            'work_type_ids' => [ 'array', 'min:1'],
+            'work_type_ids.*' => [ 'exists:work_types,id'],
+            'platform_ids' => [ 'array', 'min:1'],
+            'platform_ids.*' => [ 'exists:platforms,id'],
+            'member_ids' => [ 'array', 'min:1'],
+            'member_ids.*' => [ 'exists:members,id'],
         ]);
         if ($validator->fails())
             return $this->error($validator->errors()->first());
@@ -71,6 +73,8 @@ class ProjectController extends Controller
                 'description' => $request->description,
                 'functionality' => $request->functionality,
                 'about' => $request->about,
+                'cover' => $this->setImage($request, 'cover', 'covers'),
+                'logo' => $this->setImage($request, 'logo', 'logos'),
                 'advantages' => $request->advantages,
                 'links' => $request->links
             ]);
@@ -128,23 +132,13 @@ class ProjectController extends Controller
     public function addImages(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'project_id' => ['required', 'exists:projects,id'],
-            'cover' => ['image', 'mimes:jpeg,jpg,png,svg', 'max:1000'],
-            'logo' => ['image', 'mimes:jpeg,jpg,png,svg', 'max:1000'],
+            'project_id' => [ 'exists:projects,id'],
             'images' => ['array'],
-            'images.*' => ['required', 'image', 'mimes:jpeg,jpg,png,svg', 'max:1000']
+            'images.*' => [ 'image', 'mimes:jpeg,jpg,png,svg', 'max:1000']
         ]);
         if ($validator->fails())
             return $this->error($validator->errors()->first());
         $project = Project::find($request->project_id);
-        if ($request->cover)
-            $project->update([
-                'cover' => $this->setImage($request, 'cover', 'covers'),
-            ]);
-        if ($request->logo)
-            $project->update([
-                'logo' => $this->setImage($request, 'logo', 'logos'),
-            ]);
         if ($request->images)
             foreach ($request->images as $item) {
                 Image::create([
@@ -159,12 +153,12 @@ class ProjectController extends Controller
     public function addFeatures(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'project_id' => ['required', 'exists:projects,id'],
-            'features' => ['required', 'array', 'min:1'],
-            'features.*.title' => ['required', 'string'],
-            'features.*.description' => ['required', 'string'],
-            'features.*.images' => ['required', 'array', 'min:1'],
-            'features.*.images.*' => ['required', 'image', 'mimes:jpeg,jpg,png,svg'],
+            'project_id' => [ 'exists:projects,id'],
+            'features' => [ 'array', 'min:1'],
+            'features.*.title' => [ 'string'],
+            'features.*.description' => [ 'string'],
+            'features.*.images' => [ 'array', 'min:1'],
+            'features.*.images.*' => [ 'image', 'mimes:jpeg,jpg,png,svg'],
         ]);
         if ($validator->fails())
             return $this->error($validator->errors()->first());
@@ -188,26 +182,26 @@ class ProjectController extends Controller
     public function edit(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'id' => ['required', 'exists:projects,id'],
-            'title' => ['required', 'string', 'unique:projects,title,' . $request->id],
-            'description' => ['required', 'string'],
-            'functionality' => ['required', 'string'],
-            'about' => ['required', 'string'],
-            'advantages' => ['required', 'array'],
-            'advantages.*' => ['required', 'string'],
-            'links' => ['required', 'array', 'min:1'],
-            'links.*.link' => ['required', 'string'],
-            'links.*.platform' => ['required', 'string'],
-            'technology_ids' => ['required', 'array', 'min:1'],
-            'technology_ids.*' => ['required', 'exists:technologies,id'],
-            'tool_ids' => ['required', 'array', 'min:1'],
-            'tool_ids.*' => ['required', 'exists:tools,id'],
-            'work_type_ids' => ['required', 'array', 'min:1'],
-            'work_type_ids.*' => ['required', 'exists:work_types,id'],
-            'platform_ids' => ['required', 'array', 'min:1'],
-            'platform_ids.*' => ['required', 'exists:platforms,id'],
-            'member_ids' => ['required', 'array', 'min:1'],
-            'member_ids.*' => ['required', 'exists:members,id'],
+            'id' => [ 'exists:projects,id'],
+            'title' => [ 'string', 'unique:projects,title,' . $request->id],
+            'description' => [ 'string'],
+            'functionality' => [ 'string'],
+            'about' => [ 'string'],
+            'advantages' => [ 'array'],
+            'advantages.*' => [ 'string'],
+            'links' => [ 'array', 'min:1'],
+            'links.*.link' => [ 'string'],
+            'links.*.platform' => [ 'string'],
+            'technology_ids' => [ 'array', 'min:1'],
+            'technology_ids.*' => [ 'exists:technologies,id'],
+            'tool_ids' => [ 'array', 'min:1'],
+            'tool_ids.*' => [ 'exists:tools,id'],
+            'work_type_ids' => [ 'array', 'min:1'],
+            'work_type_ids.*' => [ 'exists:work_types,id'],
+            'platform_ids' => [ 'array', 'min:1'],
+            'platform_ids.*' => [ 'exists:platforms,id'],
+            'member_ids' => [ 'array', 'min:1'],
+            'member_ids.*' => [ 'exists:members,id'],
         ]);
         if ($validator->fails())
             return $this->error($validator->errors()->first());
@@ -334,12 +328,12 @@ class ProjectController extends Controller
     public function editImages(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'project_id' => ['required', 'exists:projects,id'],
+            'project_id' => [ 'exists:projects,id'],
             'cover' => ['nullable', 'image', 'mimes:jpeg,jpg,png,svg', 'max:1000'],
             'logo' => ['nullable', 'image', 'mimes:jpeg,jpg,png,svg', 'max:1000'],
             'images' => ['array'],
-            'images.*.id' => ['required', 'exists:images,id'],
-            'images.*.image' => ['required', 'image', 'mimes:jpeg,jpg,png,svg', 'max:1000']
+            'images.*.id' => [ 'exists:images,id'],
+            'images.*.image' => [ 'image', 'mimes:jpeg,jpg,png,svg', 'max:1000']
         ]);
         if ($validator->fails())
             return $this->error($validator->errors()->first());
@@ -385,13 +379,13 @@ class ProjectController extends Controller
     public function editFeatures(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'features' => ['required', 'array', 'min:1'],
-            'features.*.id' => ['required', 'exists:features,id'],
-            'features.*.title' => ['required', 'string'],
-            'features.*.description' => ['required', 'string'],
-            'features.*.images' => ['required', 'array', 'min:1'],
-            'features.*.images.*.id' => ['required', 'exists:images,id'],
-            'features.*.images.*.image' => ['required', 'image', 'mimes:jpeg,jpg,png,svg', 'max:1000'],
+            'features' => [ 'array', 'min:1'],
+            'features.*.id' => [ 'exists:features,id'],
+            'features.*.title' => [ 'string'],
+            'features.*.description' => [ 'string'],
+            'features.*.images' => [ 'array', 'min:1'],
+            'features.*.images.*.id' => [ 'exists:images,id'],
+            'features.*.images.*.image' => [ 'image', 'mimes:jpeg,jpg,png,svg', 'max:1000'],
             ]);
         if ($validator->fails())
             return $this->error($validator->errors()->first());
@@ -419,7 +413,7 @@ class ProjectController extends Controller
     public function delete(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'id' => ['required', 'exists:projects,id'],
+            'id' => [ 'exists:projects,id'],
         ]);
         if ($validator->fails())
             return $this->error($validator->errors()->first());
@@ -462,7 +456,7 @@ class ProjectController extends Controller
     public function activate(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'id' => ['required', 'exists:projects,id'],
+            'id' => ['exists:projects,id'],
         ]);
         if ($validator->fails())
             return $this->error($validator->errors()->first());
@@ -475,6 +469,7 @@ class ProjectController extends Controller
     public function index(Request $request)
     {
         $validator = Validator::make($request->all(), [
+            'id' => ['nullable','exists:platforms,id'],
             'title' => ['string'],
             'active' => ['boolean'],
             'technology_id' => ['exists:technologies,id'],
@@ -484,6 +479,9 @@ class ProjectController extends Controller
         ]);
         if ($validator->fails())
             return $this->error($validator->errors());
+        if ($request->id != null) {
+            return $this->success(Project::find($request->id));
+        }
         $all_projects = Project::query();
         if ($request->has('title'))
             $all_projects->where('title', 'like', '%' . $request->title . '%');
@@ -522,5 +520,15 @@ class ProjectController extends Controller
             ->paginate($records);
         return $this->success($projects);
     }
+
+    function getGroups(){
+        return $this->success([
+            "technologies"=>Technology::select('id','name')->get()->all(),
+            "toolsKit"=>Tool::select('id','name')->get()->all(),
+            "wokeTypes"=>WorkType::select('id','name')->get()->all(),
+            "platforms"=>Platform::select('id','name')->get()->all()
+        ]);
+    }
+
 
 }
