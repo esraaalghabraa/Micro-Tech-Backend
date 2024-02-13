@@ -490,7 +490,12 @@ class ProjectController extends Controller
             return $this->error($validator->errors());
         $all_projects = Project::query();
         if ($request->id != null) {
-            $all_projects->where('id',$request->id);
+           return $all_projects->where('id',$request->id)->with('technologies')
+                ->with('tools')
+                ->with('workTypes')
+                ->with('platforms')
+                ->with('members')
+                ->first();
         }
         if ($request->has('title'))
             $all_projects->where('title', 'like', '%' . $request->title . '%');
