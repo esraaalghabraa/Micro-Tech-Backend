@@ -488,10 +488,10 @@ class ProjectController extends Controller
         ]);
         if ($validator->fails())
             return $this->error($validator->errors());
-        if ($request->id != null) {
-            return $this->success(Project::find($request->id));
-        }
         $all_projects = Project::query();
+        if ($request->id != null) {
+            $all_projects->where('id',$request->id);
+        }
         if ($request->has('title'))
             $all_projects->where('title', 'like', '%' . $request->title . '%');
         if ($request->has('active'))
