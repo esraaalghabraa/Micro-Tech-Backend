@@ -73,11 +73,20 @@ class ProjectController extends Controller
                 'description' => $request->description,
                 'functionality' => $request->functionality,
                 'about' => $request->about,
-                'cover' => $this->setImage($request, 'cover', 'covers'),
-                'logo' => $this->setImage($request, 'logo', 'logos'),
                 'advantages' => $request->advantages,
                 'links' => $request->links
             ]);
+            if ($request->cover != null) {
+                    $project->update([
+                        'cover' => $this->setImage($request, 'cover', 'covers')                ]);
+                    $project->save();
+            }
+            if ($request->logo != null) {
+                    $project->update([
+                        'logo' => $this->setImage($request, 'logo', 'logos'),
+                    ]);
+                    $project->save();
+            }
             foreach ($request->tool_ids as $value) {
                 ToolProject::create([
                     'tool_id' => $value,
@@ -187,6 +196,8 @@ class ProjectController extends Controller
             'description' => [ 'string'],
             'functionality' => [ 'string'],
             'about' => [ 'string'],
+            'cover' => ['nullable', 'image', 'mimes:jpeg,jpg,png,svg', 'max:1000'],
+            'logo' => ['nullable', 'image', 'mimes:jpeg,jpg,png,svg', 'max:1000'],
             'advantages' => [ 'array'],
             'advantages.*' => [ 'string'],
             'links' => [ 'array', 'min:1'],
@@ -207,6 +218,28 @@ class ProjectController extends Controller
             return $this->error($validator->errors()->first());
         try {
             $project = Project::find($request->id);
+            if ($request->cover) {
+                if ($project->cover != null) {
+                    $this->deleteImage('covers', $project->cover);
+                    $project->cover = null;
+                    $project->save();
+                }
+                $project->update([
+                    'cover' => $this->setImage($request, 'cover', 'covers'),
+                ]);
+                $project->save();
+            }
+            if ($request->logo) {
+                if ($project->logo != null) {
+                    $this->deleteImage('logos', $project->logo);
+                    $project->logo = null;
+                    $project->save();
+                }
+                $project->update([
+                    'logo' => $this->setImage($request, 'logo', 'logos'),
+                ]);
+                $project->save();
+            }
             $project->update([
                 'title' => $request->title,
                 'description' => $request->description,
@@ -329,8 +362,6 @@ class ProjectController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'project_id' => [ 'exists:projects,id'],
-            'cover' => ['nullable', 'image', 'mimes:jpeg,jpg,png,svg', 'max:1000'],
-            'logo' => ['nullable', 'image', 'mimes:jpeg,jpg,png,svg', 'max:1000'],
             'images' => ['array'],
             'images.*.id' => [ 'exists:images,id'],
             'images.*.image' => [ 'image', 'mimes:jpeg,jpg,png,svg', 'max:1000']
@@ -338,28 +369,6 @@ class ProjectController extends Controller
         if ($validator->fails())
             return $this->error($validator->errors()->first());
         $project = Project::with('images')->find($request->project_id);
-        if ($request->cover) {
-            if ($project->cover != null) {
-                $this->deleteImage('covers', $project->cover);
-                $project->cover = null;
-                $project->save();
-            }
-            $project->update([
-                'cover' => $this->setImage($request, 'cover', 'covers'),
-            ]);
-            $project->save();
-        }
-        if ($request->logo) {
-            if ($project->logo != null) {
-                $this->deleteImage('logos', $project->logo);
-                $project->logo = null;
-                $project->save();
-            }
-            $project->update([
-                'logo' => $this->setImage($request, 'logo', 'logos'),
-            ]);
-            $project->save();
-        }
         if ($request->images) {
             $images_project = Image::where('project_id', $request->project_id)->get();
 
