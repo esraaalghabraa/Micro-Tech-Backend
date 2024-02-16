@@ -28,7 +28,7 @@ class ProjectController extends Controller
         $validator = Validator::make($request->all(), [
             'title' => [ 'string', 'unique:projects,title'],
             'description' => [ 'string'],
-            'cover' => [ 'image', 'mimes:jpeg,jpg,png,svg', 'max:1000'],
+            'cover' => [ 'image', 'mimes:jpeg,jpg,png,svg', 'max:10000'],
         ]);
         if ($validator->fails())
             return $this->error($validator->errors()->first());
@@ -47,8 +47,8 @@ class ProjectController extends Controller
             'description' => [ 'string'],
             'functionality' => [ 'string'],
             'about' => [ 'string'],
-            'cover' => ['image', 'mimes:jpeg,jpg,png,svg', 'max:1000'],
-            'logo' => ['image', 'mimes:jpeg,jpg,png,svg', 'max:1000'],
+            'cover' => ['image', 'mimes:jpeg,jpg,png,svg', 'max:10000'],
+            'logo' => ['image', 'mimes:jpeg,jpg,png,svg', 'max:10000'],
             'advantages' => [ 'array'],
             'advantages.*' => [ 'string'],
             'links' => [ 'array', 'min:1'],
@@ -143,7 +143,7 @@ class ProjectController extends Controller
         $validator = Validator::make($request->all(), [
             'project_id' => [ 'exists:projects,id'],
             'images' => ['array'],
-            'images.*' => [ 'image', 'mimes:jpeg,jpg,png,svg', 'max:1000']
+            'images.*' => [ 'image', 'mimes:jpeg,jpg,png,svg', 'max:10000']
         ]);
         if ($validator->fails())
             return $this->error($validator->errors()->first());
@@ -196,8 +196,8 @@ class ProjectController extends Controller
             'description' => [ 'string'],
             'functionality' => [ 'string'],
             'about' => [ 'string'],
-            'cover' => ['nullable', 'image', 'mimes:jpeg,jpg,png,svg', 'max:1000'],
-            'logo' => ['nullable', 'image', 'mimes:jpeg,jpg,png,svg', 'max:1000'],
+            'cover' => ['nullable', 'image', 'mimes:jpeg,jpg,png,svg', 'max:10000'],
+            'logo' => ['nullable', 'image', 'mimes:jpeg,jpg,png,svg', 'max:10000'],
             'advantages' => [ 'array'],
             'advantages.*' => [ 'string'],
             'links' => [ 'array', 'min:1'],
@@ -364,7 +364,7 @@ class ProjectController extends Controller
             'project_id' => [ 'exists:projects,id'],
             'images' => ['array'],
             'images.*.id' => [ 'exists:images,id'],
-            'images.*.image' => [ 'image', 'mimes:jpeg,jpg,png,svg', 'max:1000']
+            'images.*.image' => [ 'image', 'mimes:jpeg,jpg,png,svg', 'max:10000']
         ]);
         if ($validator->fails())
             return $this->error($validator->errors()->first());
@@ -394,7 +394,7 @@ class ProjectController extends Controller
             'features.*.description' => [ 'string'],
             'features.*.images' => [ 'array', 'min:1'],
             'features.*.images.*.id' => [ 'exists:images,id'],
-            'features.*.images.*.image' => [ 'image', 'mimes:jpeg,jpg,png,svg', 'max:1000'],
+            'features.*.images.*.image' => [ 'image', 'mimes:jpeg,jpg,png,svg', 'max:10000'],
             ]);
         if ($validator->fails())
             return $this->error($validator->errors()->first());
@@ -478,7 +478,7 @@ class ProjectController extends Controller
     public function index(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'id' => ['nullable','exists:platforms,id'],
+            'id' => ['nullable','exists:projects,id'],
             'title' => ['string'],
             'active' => ['boolean'],
             'technology_id' => ['exists:technologies,id'],
@@ -495,6 +495,12 @@ class ProjectController extends Controller
                 ->with('workTypes')
                 ->with('platforms')
                 ->with('members')
+               ->with(['features'=>function($q){
+                   return $q->with('images');
+               }])
+               ->with(['images'=>function($q){
+                   return $q->where('images.feature_id',null);
+               }])
                 ->first();
         }
         if ($request->has('title'))

@@ -14,7 +14,7 @@ return new class extends Migration
         Schema::create('platforms', function (Blueprint $table) {
             $table->id();
             $table->string('name',30);
-            $table->string('icon',255);
+            $table->string('icon',1000);
             $table->integer('number_project')->default(0);
             $table->timestamps();
         });
