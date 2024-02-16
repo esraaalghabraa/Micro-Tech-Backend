@@ -478,7 +478,6 @@ class ProjectController extends Controller
     public function index(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'id' => ['nullable','exists:projects,id'],
             'title' => ['string'],
             'active' => ['boolean'],
             'technology_id' => ['exists:technologies,id'],
@@ -490,7 +489,11 @@ class ProjectController extends Controller
             return $this->error($validator->errors());
         $all_projects = Project::query();
         if ($request->id != null) {
-           return $all_projects->where('id',$request->id)->with('technologies')
+            $pro = $all_projects->where('id',$request->id);
+            if (!$pro->first())
+                return $this->success();
+            else
+           return $pro->with('technologies')
                 ->with('tools')
                 ->with('workTypes')
                 ->with('platforms')
@@ -500,8 +503,7 @@ class ProjectController extends Controller
                }])
                ->with(['images'=>function($q){
                    return $q->where('images.feature_id',null);
-               }])
-                ->first();
+               }])->first();
         }
         if ($request->has('title'))
             $all_projects->where('title', 'like', '%' . $request->title . '%');
@@ -550,6 +552,5 @@ class ProjectController extends Controller
             "members"=>Member::select('id','name')->get()->all()
         ]);
     }
-
 
 }
