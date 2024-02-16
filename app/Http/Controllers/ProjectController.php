@@ -545,8 +545,9 @@ class ProjectController extends Controller
         return $this->success([
             "technologies"=>Technology::select('id','name')->get()->all(),
             "toolsKit"=>Tool::select('id','name')->get()->all(),
-            "wokeTypes"=>WorkType::select('id','name')->get()->all(),
-            "platforms"=>Platform::select('id','name')->get()->all()
+            "workTypes"=>WorkType::select('id','name')->get()->all(),
+            "platforms"=>Platform::select('id','name')->get()->all(),
+            "members"=>Member::select('id','name')->get()->all()
         ]);
     }
 
