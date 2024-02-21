@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminAuthController;
 use App\Http\Controllers\MemberController;
 use App\Http\Controllers\PlatformController;
 use App\Http\Controllers\ProjectController;
@@ -18,6 +19,15 @@ use Illuminate\Support\Facades\Route;
 | be assigned to the "api" middleware group. Make something great!
 |
 */
+
+Route::controller(AdminAuthController::class)
+    ->prefix('auth')
+    ->group(function () {
+        Route::post('send_code', 'send_code');
+        Route::post('verify_code', 'verifyCode');
+        Route::get('logout', 'logout');
+        Route::post('reset_password', 'resetPassword');
+    });
 
 Route::controller(WorkTypeController::class)->prefix('work_types')->group(function (){
     Route::post('create','create');

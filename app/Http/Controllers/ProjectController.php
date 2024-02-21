@@ -493,17 +493,19 @@ class ProjectController extends Controller
             if (!$pro->first())
                 return $this->success();
             else
-           return $pro->with('technologies')
-                ->with('tools')
-                ->with('workTypes')
-                ->with('platforms')
-                ->with('members')
-               ->with(['features'=>function($q){
-                   return $q->with('images');
-               }])
-               ->with(['images'=>function($q){
-                   return $q->where('images.feature_id',null);
-               }])->first();
+           return $this->success(
+               $pro->with('technologies')
+                   ->with('tools')
+                   ->with('workTypes')
+                   ->with('platforms')
+                   ->with('members')
+                   ->with(['features'=>function($q){
+                       return $q->with('images');
+                   }])
+                   ->with(['images'=>function($q){
+                       return $q->where('images.feature_id',null);
+                   }])->first()
+           );
         }
         if ($request->has('title'))
             $all_projects->where('title', 'like', '%' . $request->title . '%');

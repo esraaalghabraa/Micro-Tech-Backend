@@ -2,7 +2,11 @@
 
 namespace App\Exceptions;
 
+use HttpRequestException;
+use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Validation\ValidationException;
+use Laravel\Sanctum\Exceptions\MissingAbilityException;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -18,13 +22,28 @@ class Handler extends ExceptionHandler
         'password_confirmation',
     ];
 
-    /**
-     * Register the exception handling callbacks for the application.
-     */
-    public function register(): void
+
+    public function render($request, Throwable $e)
     {
-        $this->reportable(function (Throwable $e) {
-            //
-        });
+        if ($e instanceof MissingAbilityException){
+            return response()->json([
+                'data' => null,
+                'success' => false,
+                'message' => 'Unauthorized',
+            ],403);
+        }
+        $ex = $this->prepareException($e);
+        if ($ex instanceof HttpRequestException){
+            return $ex->getResponse();
+        }elseif ($ex instanceof AuthenticationException){
+            return response()->json([
+                'data' => null,
+                'success' => false,
+                'message' => 'unAuthenticated'
+            ], 401 );
+        }elseif ($ex instanceof ValidationException){
+            return $this->convertExceptionToResponse($ex);
+        }
+        return $this->prepareResponse($request,$ex);
     }
 }
