@@ -28,7 +28,6 @@ class Handler extends ExceptionHandler
         if ($e instanceof MissingAbilityException){
             return response()->json([
                 'data' => null,
-                'success' => false,
                 'message' => 'Unauthorized',
             ],403);
         }
@@ -38,7 +37,6 @@ class Handler extends ExceptionHandler
         }elseif ($ex instanceof AuthenticationException){
             return response()->json([
                 'data' => null,
-                'success' => false,
                 'message' => 'unAuthenticated'
             ], 401 );
         }elseif ($ex instanceof ValidationException){

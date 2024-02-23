@@ -62,7 +62,7 @@
     <div class="message-content">
         <p style="direction: rtl">مرحباً {{$message_verify['user_name']}}،</p>
         <p style="direction: rtl"> استخدم الكود التالي لتسجيل الدخول في <span style=" font-family: 'SF Pro Text'; ">Micro Tect</span></p>
-        <div class="verification-code">123456</div>
+        <div class="verification-code">{{$message_verify['verify_code']}}</div>
         <p class="note">الرجاء استخدام هذا الرمز لتسجيل الدخول إلى حسابك.</p>
     </div>
 </div>

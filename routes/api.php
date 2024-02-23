@@ -6,6 +6,7 @@ use App\Http\Controllers\PlatformController;
 use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\TechnologyController;
 use App\Http\Controllers\ToolController;
+use App\Http\Controllers\UserAuthController;
 use App\Http\Controllers\WorkTypeController;
 use Illuminate\Support\Facades\Route;
 
@@ -27,53 +28,63 @@ Route::controller(AdminAuthController::class)
         Route::post('verify_code', 'verifyCode');
         Route::get('logout', 'logout');
         Route::post('reset_password', 'resetPassword');
+        Route::get('refresh_token', 'refreshToken');
     });
 
-Route::controller(WorkTypeController::class)->prefix('work_types')->group(function (){
-    Route::post('create','create');
-    Route::post('edit','edit');
-    Route::delete('delete','delete');
-    Route::get('index','index');
-});
-Route::controller(MemberController::class)->prefix('member')->group(function (){
-    Route::post('create','create');
-    Route::post('edit','edit');
-    Route::delete('delete','delete');
-    Route::get('index','index');
-});
-Route::controller(TechnologyController::class)->prefix('technology')->group(function (){
-    Route::post('create','create');
-    Route::post('edit','edit');
-    Route::delete('delete','delete');
-    Route::get('index','index');
-});
-Route::controller(PlatformController::class)->prefix('platform')->group(function (){
-    Route::post('create','create');
-    Route::post('edit','edit');
-    Route::delete('delete','delete');
-    Route::get('index','index');
-});
-Route::controller(ToolController::class)->prefix('tool')->group(function (){
-    Route::post('create','create');
-    Route::post('edit','edit');
-    Route::delete('delete','delete');
-    Route::get('index','index');
-});
-Route::controller(ProjectController::class)->prefix('project')->group(function (){
-    Route::post('create','create');
-    Route::post('edit','edit');
-    Route::delete('delete','delete');
-    Route::get('index','index');
-    Route::patch('activate','activate');
+Route::middleware(['auth:sanctum', 'abilities:admin,access'])->group(function (){
+    Route::controller(WorkTypeController::class)->prefix('work_types')->group(function (){
+        Route::post('create','create');
+        Route::post('edit','edit');
+        Route::delete('delete','delete');
+        Route::get('index','index');
+    });
+    Route::controller(MemberController::class)->prefix('member')->group(function (){
+        Route::post('create','create');
+        Route::post('edit','edit');
+        Route::delete('delete','delete');
+        Route::get('index','index');
+    });
+    Route::controller(TechnologyController::class)->prefix('technology')->group(function (){
+        Route::post('create','create');
+        Route::post('edit','edit');
+        Route::delete('delete','delete');
+        Route::get('index','index');
+    });
+    Route::controller(PlatformController::class)->prefix('platform')->group(function (){
+        Route::post('create','create');
+        Route::post('edit','edit');
+        Route::delete('delete','delete');
+        Route::get('index','index');
+    });
+    Route::controller(ToolController::class)->prefix('tool')->group(function (){
+        Route::post('create','create');
+        Route::post('edit','edit');
+        Route::delete('delete','delete');
+        Route::get('index','index');
+    });
+    Route::controller(ProjectController::class)->prefix('project')->group(function (){
+        Route::post('create','create');
+        Route::post('edit','edit');
+        Route::delete('delete','delete');
+        Route::get('index','index');
+        Route::patch('activate','activate');
 
-    Route::post('create_fast','createFast');
-    Route::post('add_images','addImages');
-    Route::post('edit_images','editImages');
-    Route::post('add_features','addFeatures');
-    Route::post('edit_features','editFeatures');
-    Route::get("get_groups",'getGroups');
+        Route::post('create_fast','createFast');
+        Route::post('add_images','addImages');
+        Route::post('edit_images','editImages');
+        Route::post('add_features','addFeatures');
+        Route::post('edit_features','editFeatures');
+        Route::get("get_groups",'getGroups');
+    });
 });
-
-Route::get('test',function(){
-    return 'test';
-});
+Route::controller(UserAuthController::class)
+    ->prefix('user')
+    ->group(function () {
+        Route::prefix('auth')
+            ->group(function () {
+                Route::post('register', 'register');
+                Route::post('login', 'login');
+                Route::get('refresh_token', 'refreshToken');
+                Route::get('logout', 'logout');
+            });
+    });

@@ -7,6 +7,7 @@ use App\Models\Admin;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
 use Nette\Utils\Random;
@@ -15,7 +16,7 @@ class AdminAuthController extends Controller
 {
     public function __construct()
     {
-        $this->middleware(['auth:sanctum', 'abilities:admin,access'])->except(['send_code','verifyCode']);
+        $this->middleware(['auth:sanctum', 'abilities:admin,access'])->except(['send_code','verifyCode','refreshToken']);
         $this->middleware(['auth:sanctum','ability:refresh'])->only('refreshToken');
     }
 
@@ -23,16 +24,15 @@ class AdminAuthController extends Controller
     {
         $input = $request->all();
         $validation = Validator::make($input, [
-            'usernameOrEmail'=>['required','string'],
+            'user_name'=>['required','string','exists:admins,user_name'],
             'password'=>['required','string','min:6','max:50']
         ]);
-        if ($validation->fails())
+        if ($validation->fails() || !Auth::guard('admin')->validate($request->only('user_name','password')))
             return $this->error('اسم المستخدم أو كلمة المرور غير صالحة');
         try {
             DB::beginTransaction();
-            $admin = Admin::where('user_name', $request->usernameOrEmail)
-                            ->orWhere('email', $request->usernameOrEmail)
-                            ->first();
+            $admin = Admin::where('user_name', $request->user_name)->first();
+
             $verify_code = Random::generate(6, '0-9');
             $details=['verify_code'=>$verify_code,'user_name'=>$admin->user_name];
             Mail::to($admin->email)->send(new AuthMail($details));
@@ -45,7 +45,6 @@ class AdminAuthController extends Controller
             return $this->error('Server failure '.$e, 500);
         }
     }
-
 
     public function verifyCode(Request $request)
     {
@@ -78,4 +77,37 @@ class AdminAuthController extends Controller
         }
     }
 
+    public function resetPassword(Request $request)
+    {
+        $validator = Validator::make($request->all(),
+            [
+                'password' => ['required', 'string','min:6','max:50'],
+            ]);
+        if ($validator->fails())
+            return $this->error($validator->errors()->first());
+        $admin = Auth::user();
+        $admin->password = Hash::make($request->password);
+        $admin->save();
+        return $this->success();
+    }
+
+    public function logout(Request $request){
+        Auth::user()->currentAccessToken()->delete();
+        return $this->success();
+    }
+
+    public function refreshToken(Request $request)
+    {
+        try {
+            DB::beginTransaction();
+            $request->user()->tokens()->delete();
+            $token = $request->user()->createToken('accessToken', ['admin','access'], now()->addDay())->plainTextToken;
+            $r_token = $request->user()->createToken('refreshToken', ['admin','refresh'], now()->addDays(6))->plainTextToken;
+            DB::commit();
+            return $this->success(['token' => $token, 'refresh_token' => $r_token]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return $this->error('Server failure : ' . $e, 500);
+        }
+    }
 }
