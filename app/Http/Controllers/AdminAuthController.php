@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Mail\AuthMail;
+use App\Mail\ContactMail;
 use App\Models\Admin;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -16,11 +17,11 @@ class AdminAuthController extends Controller
 {
     public function __construct()
     {
-        $this->middleware(['auth:sanctum', 'abilities:admin,access'])->except(['send_code','verifyCode','refreshToken']);
+        $this->middleware(['auth:sanctum', 'abilities:admin,access'])->except(['login','verifyCode','refreshToken']);
         $this->middleware(['auth:sanctum','ability:refresh'])->only('refreshToken');
     }
 
-    public function send_code(Request $request)
+    public function login(Request $request)
     {
         $input = $request->all();
         $validation = Validator::make($input, [

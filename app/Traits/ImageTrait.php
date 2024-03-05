@@ -21,7 +21,7 @@ Trait ImageTrait{
     }
     private function getImage( $image,$folderName)
     {
-        return $image ? asset('assets/images/'.$folderName.'/'.$image) : asset('assets/images/im5.png');
+        return $image ? asset('assets/images/'.$folderName.'/'.$image) : '';
     }
 
     private function getImagesArray($images, $folderName)
@@ -30,7 +30,7 @@ Trait ImageTrait{
         if ($images==null)
             return [];
         foreach ($images as $i=>$image) {
-            $hero_images[$i]=$image ? asset('assets/images/'.$folderName.'/'.$image) : asset('assets/images/im5.png');
+            $hero_images[$i]=$image ? asset('assets/images/'.$folderName.'/'.$image) : '';
         }
         return $hero_images;
     }

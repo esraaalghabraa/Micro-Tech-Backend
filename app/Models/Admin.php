@@ -12,4 +12,5 @@ class Admin extends Authenticatable
 {
     use HasApiTokens, HasFactory, Notifiable;
     protected $guarded=[];
+    protected $hidden=['password','remember_token','verification_code','updated_at','created_at'];
 }

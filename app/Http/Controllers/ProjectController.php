@@ -46,6 +46,7 @@ class ProjectController extends Controller
             'title' => [ 'string', 'unique:projects,title'],
             'description' => [ 'string'],
             'functionality' => [ 'string'],
+            'category' => [ 'string'],
             'about' => [ 'string'],
             'cover' => ['image', 'mimes:jpeg,jpg,png,svg', 'max:10000'],
             'logo' => ['image', 'mimes:jpeg,jpg,png,svg', 'max:10000'],
@@ -72,9 +73,10 @@ class ProjectController extends Controller
                 'title' => $request->title,
                 'description' => $request->description,
                 'functionality' => $request->functionality,
+                'category' => $request->category,
                 'about' => $request->about,
                 'advantages' => $request->advantages,
-                'links' => $request->links
+                'links' => $request->links,
             ]);
             if ($request->cover != null) {
                     $project->update([
@@ -87,15 +89,18 @@ class ProjectController extends Controller
                     ]);
                     $project->save();
             }
-            foreach ($request->tool_ids as $value) {
-                ToolProject::create([
-                    'tool_id' => $value,
-                    'project_id' => $project->id
-                ]);
-                $tool = Tool::find($value);
-                $tool->number_project += 1;
-                $tool->save();
+            if ($request->has('tool_ids')){
+                foreach ($request->tool_ids as $value) {
+                    ToolProject::create([
+                        'tool_id' => $value,
+                        'project_id' => $project->id
+                    ]);
+                    $tool = Tool::find($value);
+                    $tool->number_project += 1;
+                    $tool->save();
+                }
             }
+            if ($request->has('work_type_ids'))
             foreach ($request->work_type_ids as $value) {
                 WorkTypesProject::create([
                     'work_type_id' => $value,
@@ -105,6 +110,7 @@ class ProjectController extends Controller
                 $work_type->number_project += 1;
                 $work_type->save();
             }
+            if ($request->has('member_ids'))
             foreach ($request->member_ids as $value) {
                 MemberProject::create([
                     'member_id' => $value,
@@ -114,6 +120,7 @@ class ProjectController extends Controller
                 $member->number_project += 1;
                 $member->save();
             }
+            if ($request->has('technology_ids'))
             foreach ($request->technology_ids as $value) {
                 TechnologiesProject::create([
                     'technology_id' => $value,
@@ -123,6 +130,7 @@ class ProjectController extends Controller
                 $technology->number_project += 1;
                 $technology->save();
             }
+            if ($request->has('platform_ids'))
             foreach ($request->platform_ids as $value) {
                 PlatformProject::create([
                     'platform_id' => $value,
@@ -195,6 +203,7 @@ class ProjectController extends Controller
             'title' => [ 'string', 'unique:projects,title,' . $request->id],
             'description' => [ 'string'],
             'functionality' => [ 'string'],
+            'category' => [ 'string'],
             'about' => [ 'string'],
             'cover' => ['nullable', 'image', 'mimes:jpeg,jpg,png,svg', 'max:10000'],
             'logo' => ['nullable', 'image', 'mimes:jpeg,jpg,png,svg', 'max:10000'],
@@ -246,111 +255,119 @@ class ProjectController extends Controller
                 'functionality' => $request->functionality,
                 'about' => $request->about,
                 'advantages' => $request->advantages,
-                'links' => $request->links
+                'links' => $request->links,
+                'category' => $request->category,
             ]);
 
             $tool_project = ToolProject::where('project_id', $request->id)->get();
-            foreach ($tool_project as $item) {
-                $tool = Tool::find($item->tool_id);
-                $tool->update([
-                    'number_project' => $tool->number_project-1
-                ]);
-                $tool->save();
-                $item->delete();
+            if ($request->has('tool_ids')){
+                foreach ($tool_project as $item) {
+                    $tool = Tool::find($item->tool_id);
+                    $tool->update([
+                        'number_project' => $tool->number_project-1
+                    ]);
+                    $tool->save();
+                    $item->delete();
+                }
+                foreach ($request->tool_ids as $value) {
+                    ToolProject::create([
+                        'tool_id' => (int)$value,
+                        'project_id' => $project->id
+                    ]);
+                    $tool = Tool::find((int)$value);
+                    $tool->update([
+                        'number_project' => $tool->number_project+1
+                    ]);
+                    $tool->save();
+                }
             }
-            foreach ($request->tool_ids as $value) {
-               ToolProject::create([
-                    'tool_id' => (int)$value,
-                    'project_id' => $project->id
-                ]);
-                $tool = Tool::find((int)$value);
-                $tool->update([
-                    'number_project' => $tool->number_project+1
-                ]);
-                $tool->save();
+            if ($request->has('work_type_ids')) {
+                $work_type_projects = WorkTypesProject::where('project_id', $request->id)->get();
+                foreach ($work_type_projects as $item) {
+                    $work_type = WorkType::find($item->work_type_id);
+                    $work_type->update([
+                        'number_project' => $work_type->number_project - 1
+                    ]);
+                    $work_type->save();
+                    $item->delete();
+                }
+                foreach ($request->work_type_ids as $value) {
+                    WorkTypesProject::create([
+                        'work_type_id' => (int)$value,
+                        'project_id' => $project->id
+                    ]);
+                    $work_type = WorkType::find((int)$value);
+                    $work_type->update([
+                        'number_project' => $work_type->number_project + 1
+                    ]);
+                    $work_type->save();
+                }
             }
-            $work_type_projects = WorkTypesProject::where('project_id', $request->id)->get();
-            foreach ($work_type_projects as $item) {
-                $work_type = WorkType::find($item->work_type_id);
-                $work_type->update([
-                    'number_project' => $work_type->number_project-1
-                ]);
-                $work_type->save();
-                $item->delete();
+            if ($request->has('member_ids')) {
+                $member_project = MemberProject::where('project_id', $request->id)->get();
+                foreach ($member_project as $item) {
+                    $member = Member::find($item->member_id);
+                    $member->update([
+                        'number_project' => $member->number_project - 1
+                    ]);
+                    $member->save();
+                    $item->delete();
+                }
+                foreach ($request->member_ids as $value) {
+                    MemberProject::create([
+                        'member_id' => (int)$value,
+                        'project_id' => $project->id
+                    ]);
+                    $member = Member::find((int)$value);
+                    $member->update([
+                        'number_project' => $member->number_project + 1
+                    ]);
+                    $member->save();
+                }
             }
-            foreach ($request->work_type_ids as $value) {
-                WorkTypesProject::create([
-                    'work_type_id' => (int)$value,
-                    'project_id' => $project->id
-                ]);
-                $work_type = WorkType::find((int)$value);
-                $work_type->update([
-                    'number_project' => $work_type->number_project+1
-                ]);
-                $work_type->save();
+            if ($request->has('technology_ids')) {
+                $technology_project = TechnologiesProject::where('project_id', $request->id)->get();
+                foreach ($technology_project as $item) {
+                    $technology = Technology::find($item->technology_id);
+                    $technology->update([
+                        'number_project' => $technology->number_project - 1
+                    ]);
+                    $technology->save();
+                    $item->delete();
+                }
+                foreach ($request->technology_ids as $value) {
+                    TechnologiesProject::create([
+                        'technology_id' => (int)$value,
+                        'project_id' => $project->id
+                    ]);
+                    $technology = Technology::find((int)$value);
+                    $technology->update([
+                        'number_project' => $technology->number_project + 1
+                    ]);
+                    $technology->save();
+                }
             }
-
-            $member_project = MemberProject::where('project_id', $request->id)->get();
-            foreach ($member_project as $item) {
-                $member = Member::find($item->member_id);
-                $member->update([
-                    'number_project' => $member->number_project-1
-                ]);
-                $member->save();
-                $item->delete();
-            }
-            foreach ($request->member_ids as $value) {
-                MemberProject::create([
-                    'member_id' => (int)$value,
-                    'project_id' => $project->id
-                ]);
-                $member = Member::find((int)$value);
-                $member->update([
-                    'number_project' => $member->number_project+1
-                ]);
-                $member->save();
-            }
-
-            $technology_project = TechnologiesProject::where('project_id', $request->id)->get();
-            foreach ($technology_project as $item) {
-                $technology = Technology::find($item->technology_id);
-                $technology->update([
-                    'number_project' => $technology->number_project-1
-                ]);
-                $technology->save();
-                $item->delete();
-            }
-            foreach ($request->technology_ids as $value) {
-                TechnologiesProject::create([
-                    'technology_id' => (int)$value,
-                    'project_id' => $project->id
-                ]);
-                $technology = Technology::find((int)$value);
-                $technology->update([
-                    'number_project' => $technology->number_project+1
-                ]);
-                $technology->save();
-            }
-
-            $platform_project = PlatformProject::where('project_id', $request->id)->get();
-            foreach ($platform_project as $item) {
-                $platform = Platform::find($item->platform_id);
-                $platform->update([
-                    'number_project' => $platform->number_project-1
-                ]);
-                $platform->save();
-                $item->delete();
-            }
-            foreach ($request->platform_ids as $value) {
-                PlatformProject::create([
-                    'platform_id' => (int)$value,
-                    'project_id' => $project->id
-                ]);
-                $platform = Platform::find((int)$value);
-                $platform->update([
-                    'number_project' => $platform->number_project+1
-                ]);
-                $platform->save();
+            if ($request->has('platform_ids')) {
+                $platform_project = PlatformProject::where('project_id', $request->id)->get();
+                foreach ($platform_project as $item) {
+                    $platform = Platform::find($item->platform_id);
+                    $platform->update([
+                        'number_project' => $platform->number_project - 1
+                    ]);
+                    $platform->save();
+                    $item->delete();
+                }
+                foreach ($request->platform_ids as $value) {
+                    PlatformProject::create([
+                        'platform_id' => (int)$value,
+                        'project_id' => $project->id
+                    ]);
+                    $platform = Platform::find((int)$value);
+                    $platform->update([
+                        'number_project' => $platform->number_project + 1
+                    ]);
+                    $platform->save();
+                }
             }
             return $this->success(['project_id' => $project->id]);
         } catch (\Exception $e) {
@@ -471,6 +488,19 @@ class ProjectController extends Controller
             return $this->error($validator->errors()->first());
         $project = Project::find($request->id);
         $project->active = !$project->active;
+        $project->save();
+        return $this->success();
+    }
+
+    public function special(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'id' => ['exists:projects,id'],
+        ]);
+        if ($validator->fails())
+            return $this->error($validator->errors()->first());
+        $project = Project::find($request->id);
+        $project->special = !$project->special;
         $project->save();
         return $this->success();
     }

@@ -11,7 +11,7 @@ class Project extends Model
 {
     use HasFactory,ImageTrait;
     protected $guarded=[];
-    protected $hidden=['cover','logo'];
+    protected $hidden=['cover','logo','created_at','updated_at','active','special'];
     protected $appends=['cover_url','logo_url'];
     protected $casts=[
         'advantages'=>'array',
@@ -47,4 +47,18 @@ class Project extends Model
         return $this->belongsToMany(Member::class,MemberProject::class);
     }
 
+    public function usersAddLike(){
+        return $this -> belongsToMany(User::class,'likes');
+    }
+
+    public function likes(){
+        return $this->hasMany(Like::class);
+    }
+    public function usersAddComment(){
+        return $this -> belongsToMany(User::class,'comments');
+    }
+
+    public function comments(){
+        return $this->hasMany(Comment::class);
+    }
 }

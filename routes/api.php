@@ -7,6 +7,7 @@ use App\Http\Controllers\ProjectController;
 use App\Http\Controllers\TechnologyController;
 use App\Http\Controllers\ToolController;
 use App\Http\Controllers\UserAuthController;
+use App\Http\Controllers\UserController;
 use App\Http\Controllers\WorkTypeController;
 use Illuminate\Support\Facades\Route;
 
@@ -24,7 +25,7 @@ use Illuminate\Support\Facades\Route;
 Route::controller(AdminAuthController::class)
     ->prefix('auth')
     ->group(function () {
-        Route::post('send_code', 'send_code');
+        Route::post('login', 'login');
         Route::post('verify_code', 'verifyCode');
         Route::get('logout', 'logout');
         Route::post('reset_password', 'resetPassword');
@@ -68,6 +69,7 @@ Route::middleware(['auth:sanctum', 'abilities:admin,access'])->group(function ()
         Route::delete('delete','delete');
         Route::get('index','index');
         Route::patch('activate','activate');
+        Route::patch('special','special');
 
         Route::post('create_fast','createFast');
         Route::post('add_images','addImages');
@@ -77,14 +79,28 @@ Route::middleware(['auth:sanctum', 'abilities:admin,access'])->group(function ()
         Route::get("get_groups",'getGroups');
     });
 });
-Route::controller(UserAuthController::class)
-    ->prefix('user')
+Route::prefix('user')
     ->group(function () {
-        Route::prefix('auth')
+        Route::controller(UserAuthController::class)
             ->group(function () {
-                Route::post('register', 'register');
-                Route::post('login', 'login');
-                Route::get('refresh_token', 'refreshToken');
-                Route::get('logout', 'logout');
+                Route::prefix('auth')->group(function (){
+                    Route::post('register', 'register');
+                    Route::post('login', 'login');
+                    Route::get('refresh_token', 'refreshToken');
+                    Route::get('logout', 'logout');
+                    //TODO Forget password
+                });
+                Route::post('send_message','sendMessage');
+                Route::get('get_home_projects','getHomeProjects');
+                Route::get('get_projects','getProjects');
+
             });
+        Route::controller(UserController::class)
+            ->group(function () {
+                Route::post('change_like','changeLike');
+                Route::post('add_comment','addComment');
+                Route::post('edit_comment','editComment');
+                Route::post('delete_comment','deleteComment');
+            });
+
     });
